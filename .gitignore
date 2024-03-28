@@ -1,0 +1,7 @@
+
+.docksal
+.vscode
+vendor
+*.sql
+node_modules
+.parcel-cache
