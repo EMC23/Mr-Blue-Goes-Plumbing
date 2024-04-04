@@ -3,26 +3,21 @@ import Chest from '../items/Chest'
 
 import { sceneEvents } from '../events/EventsCenter'
 
-declare global
-{
-	namespace Phaser.GameObjects
-	{
-		interface GameObjectFactory
-		{
+declare global {
+	namespace Phaser.GameObjects {
+		interface GameObjectFactory {
 			mrBlue(x: number, y: number, texture: string, frame?: string | number): MrBlue
 		}
 	}
 }
 
-enum HealthState
-{
+enum HealthState {
 	IDLE,
 	DAMAGE,
 	DEAD
 }
 
-export default class MrBlue extends Phaser.Physics.Arcade.Sprite
-{
+export default class MrBlue extends Phaser.Physics.Arcade.Sprite {
 	private healthState = HealthState.IDLE
 	private damageTime = 0
 
@@ -31,52 +26,44 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 
 	private knives?: Phaser.Physics.Arcade.Group
 	private activeChest?: Chest
+	private direction = 'Left'
 
-	get health()
-	{
+	get health() {
 		return this._health
 	}
 
-	constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number)
-	{
+	constructor(scene: Phaser.Scene, x: number, y: number, texture: string, frame?: string | number) {
 		super(scene, x, y, texture, frame)
 
 		this.anims.play('walkDown_mrBlue')
 	}
 
-	setKnives(knives: Phaser.Physics.Arcade.Group)
-	{
+	setKnives(knives: Phaser.Physics.Arcade.Group) {
 		this.knives = knives
 	}
 
-	setChest(chest: Chest)
-	{
+	setChest(chest: Chest) {
 		this.activeChest = chest
 	}
 
-	handleDamage(dir: Phaser.Math.Vector2)
-	{
-		if (this._health <= 0)
-		{
+	handleDamage(dir: Phaser.Math.Vector2) {
+		if (this._health <= 0) {
 			return
 		}
 
-		if (this.healthState === HealthState.DAMAGE)
-		{
+		if (this.healthState === HealthState.DAMAGE) {
 			return
 		}
 
 		--this._health
 
-		if (this._health <= 0)
-		{
+		if (this._health <= 0) {
 			// TODO: die
 			this.healthState = HealthState.DEAD
-			this.anims.play('faune-faint')
+			//this.anims.play('faune-faint')
 			this.setVelocity(0, 0)
 		}
-		else
-		{
+		else {
 			this.setVelocity(dir.x, dir.y)
 
 			this.setTint(0xff0000)
@@ -86,26 +73,22 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 		}
 	}
 
-	private throwKnife()
-	{
-		if (!this.knives)
-		{
+	private throwKnife() {
+		if (!this.knives) {
 			return
 		}
 
 		const knife = this.knives.get(this.x, this.y, 'knife') as Phaser.Physics.Arcade.Image
-		if (!knife)
-		{
+		if (!knife) {
 			return
 		}
 
-	//	const parts = this.anims.currentAnim.key.split('-')
-	//	const direction = parts[2]
+		//const parts = this.anims.currentAnim.key.split('-')
+		//const direction = parts[2]
 
 		const vec = new Phaser.Math.Vector2(0, 0)
 
-		switch (direction)
-		{
+		switch (this.direction) {
 			case 'up':
 				vec.y = -1
 				break
@@ -114,16 +97,13 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 				vec.y = 1
 				break
 
-			default:
-			case 'side':
-				if (this.scaleX < 0)
-				{
-					vec.x = -1
-				}
-				else
-				{
-					vec.x = 1
-				}
+			case 'left':
+				vec.x = -1
+				break
+			case 'right':
+
+				vec.x = 1
+
 				break
 		}
 
@@ -140,19 +120,16 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 		knife.setVelocity(vec.x * 300, vec.y * 300)
 	}
 
-	preUpdate(t: number, dt: number)
-	{
+	preUpdate(t: number, dt: number) {
 		super.preUpdate(t, dt)
 
-		switch (this.healthState)
-		{
+		switch (this.healthState) {
 			case HealthState.IDLE:
 				break
 
 			case HealthState.DAMAGE:
 				this.damageTime += dt
-				if (this.damageTime >= 250)
-				{
+				if (this.damageTime >= 250) {
 					this.healthState = HealthState.IDLE
 					this.setTint(0xffffff)
 					this.damageTime = 0
@@ -161,31 +138,25 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 		}
 	}
 
-	update(cursors: Phaser.Types.Input.Keyboard.CursorKeys)
-	{
+	update(cursors: Phaser.Types.Input.Keyboard.CursorKeys) {
 		if (this.healthState === HealthState.DAMAGE
 			|| this.healthState === HealthState.DEAD
-		)
-		{
+		) {
 			return
 		}
 
-		if (!cursors)
-		{
+		if (!cursors) {
 			return
 		}
 
-		if (Phaser.Input.Keyboard.JustDown(cursors.space!))
-		{
-			if (this.activeChest)
-			{
+		if (Phaser.Input.Keyboard.JustDown(cursors.space!)) {
+			if (this.activeChest) {
 				const coins = this.activeChest.open()
 				this._coins += coins
 
 				sceneEvents.emit('player-coins-changed', this._coins)
 			}
-			else
-			{
+			else {
 				this.throwKnife()
 			}
 			return
@@ -198,41 +169,35 @@ export default class MrBlue extends Phaser.Physics.Arcade.Sprite
 		const upDown = cursors.up?.isDown
 		const downDown = cursors.down?.isDown
 
-		if (leftDown)
-		{
-			this.anims.play('walkLeft_mrBlue',true)
+		if (leftDown) {
+			this.anims.play('walkLeft_mrBlue', true)
 			this.setVelocity(-speed, 0)
-
+			this.direction = 'left'
 			//this.scaleX = -1
 			this.body.offset.x = 24
 		}
-		else if (rightDown)
-		{
-			this.anims.play('walkRight_mrBlue',true)
+		else if (rightDown) {
+			this.anims.play('walkRight_mrBlue', true)
 			this.setVelocity(speed, 0)
-
-		//	this.scaleX = 1
+			this.direction = 'right'
+			//this.scaleX = 1
 			this.body.offset.x = 8
 		}
-		else if (upDown)
-		{
-			this.anims.play('walkUp_mrBlue',SVGComponentTransferFunctionElement)
+		else if (upDown) {
+			this.anims.play('walkUp_mrBlue', SVGComponentTransferFunctionElement)
 			this.setVelocity(0, -speed)
 		}
-		else if (downDown)
-		{
-			this.anims.play('walkDown_mrBlue',true)
-			this.setVelocity(0, speed)
+		else if (downDown) {
+			//	this.anims.play('walkDown_mrBlue',true)
+			//	this.setVelocity(0, speed)
 		}
-		else
-		{
+		else {
 
 			this.anims.play('stop_mrBlue')
 			this.setVelocity(0, 0)
 		}
 
-		if (leftDown || rightDown || upDown || downDown)
-		{
+		if (leftDown || rightDown || upDown || downDown) {
 			this.activeChest = undefined
 		}
 	}
